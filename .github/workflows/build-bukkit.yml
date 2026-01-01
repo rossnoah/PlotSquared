@@ -1,0 +1,29 @@
+name: Build Bukkit
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build_bukkit:
+    if: github.repository_owner == 'IntellectualSites'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v5
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build Bukkit
+        run: ./gradlew :plotsquared-bukkit:shadowJar
+      - name: Upload Bukkit JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlotSquared-Bukkit
+          path: Bukkit/build/libs/plotsquared-bukkit-*.jar
+          if-no-files-found: error
