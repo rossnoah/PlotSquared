@@ -27,6 +27,9 @@ import com.plotsquared.core.database.DBFunc;
 import com.plotsquared.core.events.PlayerAutoPlotEvent;
 import com.plotsquared.core.events.PlotAutoMergeEvent;
 import com.plotsquared.core.events.Result;
+import com.plotsquared.core.events.TeleportCause;
+import com.plotsquared.core.util.query.PlotQuery;
+import com.plotsquared.core.util.query.SortingStrategy;
 import com.plotsquared.core.permissions.Permission;
 import com.plotsquared.core.permissions.PermissionHandler;
 import com.plotsquared.core.player.MetaDataAccess;
@@ -203,6 +206,19 @@ public class Auto extends SubCommand {
             if (plotarea == null) {
                 player.sendMessage(TranslatableCaption.of("errors.not_in_plot_world"));
                 return false;
+            }
+        }
+        // If the player already has a plot, teleport them to their plot home instead
+        int currentPlots = Settings.Limit.GLOBAL ? player.getPlotCount() : player.getPlotCount(plotarea.getWorldName());
+        if (currentPlots > 0) {
+            PlotQuery query = PlotQuery.newQuery()
+                    .thatPasses(plot -> plot.isOwner(player.getUUID()))
+                    .whereBasePlot()
+                    .withSortingStrategy(SortingStrategy.SORT_BY_CREATION);
+            List<Plot> ownedPlots = query.asList();
+            if (!ownedPlots.isEmpty()) {
+                ownedPlots.get(0).teleportPlayer(player, TeleportCause.COMMAND_HOME, result -> {});
+                return true;
             }
         }
         int sizeX = 1;
